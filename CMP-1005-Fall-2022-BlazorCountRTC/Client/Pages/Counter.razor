@@ -1,0 +1,57 @@
+﻿@page "/counter"
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<p role="status">Current count: @currentCount</p>
+
+<button class="btn btn-primary" @onclick="SendCount">Click me</button>
+
+@code {
+    private int currentCount = 0;
+    private HubConnection? _connection;
+
+    protected async override Task OnInitializedAsync()
+    {
+        _connection = new HubConnectionBuilder().WithUrl(Navigation.ToAbsoluteUri("/hub/counter")).Build();
+
+        _connection.On<int>("NewCount", (count) =>
+        {
+            currentCount = count;
+
+            StateHasChanged();
+        });
+
+        await _connection.StartAsync();
+    }
+
+    public async Task SendCount()
+    {
+        if (_connection is not null)
+        {
+            await _connection.SendAsync("IncrementCount");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_connection is not null)
+        {
+            await _connection.DisposeAsync();
+        }
+    }
+
+    //private async void IncrementCount(object? sender, int newCounter)
+    //{
+    //    await InvokeAsync(() => {
+
+    //        currentCount = newCounter;
+
+    //        StateHasChanged();
+
+    //    });
+    //}
+}
